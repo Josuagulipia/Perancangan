@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Petualangan Kriya Dayak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Passion+One:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood-dark:#2B1810;
+    --wood:#3E2416;
+    --wood-light:#5A3A26;
+    --red:#B33A2E;
+    --red-dark:#8A2A20;
+    --gold:#D9A441;
+    --gold-light:#F0C877;
+    --cream:#F2E8D5;
+    --black:#1A1410;
+    --green-ok:#4E8B4A;
+    --green-ok-dark:#2F5C2C;
+    --red-bad:#C4453A;
+    --shadow-strong:rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:'Nunito',sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(217,164,65,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(179,58,46,0.10), transparent 40%),
+      var(--wood-dark);
+    color:var(--cream);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .zigzag{
+    height:14px;
+    width:100%;
+    background:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%) -8px 0,
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%) -8px 0,
+      linear-gradient(315deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%);
+    background-size:16px 16px;
+    opacity:0.85;
+  }
+  .screen{
+    display:none;
+    min-height:100vh;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px 48px;
+  }
+  .screen.active{display:flex;}
+  h1,h2,h3{
+    font-family:'Passion One',sans-serif;
+    letter-spacing:0.5px;
+    margin:0;
+  }
+  .title-main{
+    font-size:clamp(2.2rem,6vw,4rem);
+    color:var(--gold-light);
+    text-align:center;
+    text-shadow:3px 3px 0 var(--black);
+    line-height:1.05;
+  }
+  .subtitle{
+    font-size:clamp(1rem,2.5vw,1.3rem);
+    color:var(--cream);
+    opacity:0.9;
+    text-align:center;
+    max-width:640px;
+    margin-top:12px;
+  }
+  .card-panel{
+    background:var(--wood);
+    border:3px solid var(--gold);
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 10px 30px var(--shadow-strong);
+    width:100%;
+    max-width:900px;
+  }
+  .btn{
+    font-family:'Nunito',sans-serif;
+    font-weight:800;
+    font-size:clamp(1rem,2.2vw,1.25rem);
+    padding:16px 28px;
+    border-radius:14px;
+    border:none;
+    cursor:pointer;
+    background:var(--red);
+    color:var(--cream);
+    box-shadow:0 6px 0 var(--red-dark);
+    transition:transform 0.08s ease;
+    min-height:56px;
+  }
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red-dark);}
+  .btn:hover{filter:brightness(1.08);}
+  .btn.gold{background:var(--gold);color:var(--black);box-shadow:0 6px 0 #a5761f;}
+  .btn.gold:active{box-shadow:0 2px 0 #a5761f;}
+  .btn.green{background:var(--green-ok);box-shadow:0 6px 0 var(--green-ok-dark);}
+  .btn.green:active{box-shadow:0 2px 0 var(--green-ok-dark);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-big{width:100%;padding:26px;font-size:clamp(1.2rem,3vw,1.6rem);}
+
+  #score-bar{
+    position:sticky;top:0;z-index:50;
+    width:100%;
+    background:var(--black);
+    border-bottom:3px solid var(--gold);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 20px;
+    font-weight:800;
+    font-size:clamp(0.95rem,2vw,1.2rem);
+  }
+  #score-bar span.pts{color:var(--gold-light);}
+
+  .map-wrap{max-width:900px;width:100%;margin-top:20px;}
+  .map-nodes{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:20px;
+    margin-top:24px;
+  }
+  .node{
+    background:var(--wood);
+    border:3px solid var(--wood-light);
+    border-radius:16px;
+    padding:18px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform 0.12s ease, border-color 0.12s ease;
+    position:relative;
+  }
+  .node.unlocked{border-color:var(--gold);}
+  .node.unlocked:hover{transform:translateY(-4px);}
+  .node.locked{opacity:0.45;cursor:not-allowed;}
+  .node.done{border-color:var(--green-ok);}
+  .node .badge-num{
+    display:inline-block;
+    background:var(--gold);
+    color:var(--black);
+    font-family:'Passion One',sans-serif;
+    font-size:1.5rem;
+    width:44px;height:44px;
+    line-height:44px;
+    border-radius:50%;
+    margin-bottom:10px;
+  }
+  .node.done .badge-num{background:var(--green-ok);color:white;}
+  .node-name{font-family:'Passion One',sans-serif;font-size:1.3rem;color:var(--gold-light);}
+  .node-desc{font-size:0.9rem;opacity:0.85;margin-top:6px;}
+  .node-status{margin-top:10px;font-size:0.85rem;font-weight:800;}
+  .lock-icon{font-size:1.6rem;}
+
+  .mission-header{width:100%;max-width:900px;text-align:center;margin-bottom:18px;}
+  .mission-header h2{font-size:clamp(1.6rem,4vw,2.4rem);color:var(--gold-light);}
+  .mission-header p{margin-top:6px;color:var(--cream);opacity:0.9;font-size:clamp(0.95rem,2vw,1.1rem);}
+
+  .progress-line{
+    width:100%;max-width:900px;height:14px;background:var(--wood);
+    border-radius:10px;overflow:hidden;border:2px solid var(--gold);margin-bottom:20px;
+  }
+  .progress-fill{height:100%;background:var(--gold);width:0%;transition:width 0.3s ease;}
+
+  /* Misi 1: klasifikasi */
+  .pool{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:22px;}
+  .item-card{
+    background:var(--gold);
+    color:var(--black);
+    font-weight:800;
+    padding:14px 18px;
+    border-radius:12px;
+    cursor:pointer;
+    border:3px solid transparent;
+    font-size:clamp(0.9rem,2vw,1.05rem);
+    min-height:56px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+  }
+  .item-card.selected{border-color:var(--red);transform:scale(1.05);}
+  .item-card.placed{opacity:0;pointer-events:none;}
+  .bins{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+  .bin{
+    flex:1;min-width:260px;
+    background:var(--wood-light);
+    border:3px dashed var(--gold);
+    border-radius:16px;
+    padding:16px;min-height:180px;
+  }
+  .bin h3{color:var(--gold-light);text-align:center;margin-bottom:10px;}
+  .bin .placed-items{display:flex;flex-direction:column;gap:8px;}
+  .bin .placed-item{background:var(--green-ok);color:white;padding:8px 12px;border-radius:8px;font-weight:700;font-size:0.9rem;}
+
+  /* Misi 2: T/F */
+  .statement-box{
+    background:var(--wood-light);
+    border-radius:16px;padding:26px;
+    font-size:clamp(1.05rem,2.6vw,1.4rem);
+    font-weight:700;text-align:center;
+    margin-bottom:22px;min-height:100px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .tf-buttons{display:flex;gap:20px;width:100%;max-width:500px;}
+  .tf-buttons .btn{flex:1;}
+
+  /* Misi 3: matching */
+  .match-cols{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;}
+  .match-col{display:flex;flex-direction:column;gap:10px;min-width:240px;}
+  .match-item{
+    background:var(--gold);color:var(--black);font-weight:800;
+    padding:14px;border-radius:12px;cursor:pointer;border:3px solid transparent;
+    text-align:center;font-size:0.95rem;
+  }
+  .match-item.selected{border-color:var(--red);}
+  .match-item.matched{background:var(--green-ok);color:white;pointer-events:none;opacity:0.8;}
+
+  /* Misi 4 & 6: sequencing */
+  .slots{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    margin-bottom:24px;min-height:70px;
+  }
+  .slot{
+    width:120px;min-height:64px;
+    background:var(--wood-light);
+    border:3px dashed var(--gold);
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.8rem;font-weight:800;text-align:center;padding:6px;
+    color:var(--cream);
+  }
+  .slot.filled{border-style:solid;background:var(--gold);color:var(--black);}
+  .slot.correct{border-color:var(--green-ok);background:var(--green-ok);color:white;}
+  .slot.wrong{border-color:var(--red-bad);background:var(--red-bad);color:white;}
+  .chip-pool{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;}
+  .chip{
+    background:var(--red);color:var(--cream);font-weight:800;
+    padding:14px 16px;border-radius:12px;cursor:pointer;font-size:0.9rem;
+    min-width:100px;text-align:center;
+  }
+  .chip.used{opacity:0;pointer-events:none;}
+
+  /* Misi 5: timer quiz */
+  .timer-bar-wrap{width:100%;max-width:500px;height:16px;background:var(--wood-light);border-radius:10px;overflow:hidden;border:2px solid var(--gold);margin-bottom:18px;}
+  .timer-bar{height:100%;background:var(--red);width:100%;transition:width 0.1s linear;}
+  .quiz-q{font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:700;text-align:center;margin-bottom:20px;max-width:700px;}
+  .quiz-opts{display:flex;flex-direction:column;gap:14px;width:100%;max-width:600px;}
+  .quiz-opts .btn{width:100%;text-align:left;padding:18px 22px;}
+
+  .feedback-box{
+    margin-top:20px;padding:16px 20px;border-radius:14px;
+    font-weight:700;text-align:center;font-size:1rem;max-width:700px;width:100%;
+    display:none;
+  }
+  .feedback-box.show{display:block;}
+  .feedback-box.ok{background:rgba(78,139,74,0.25);border:2px solid var(--green-ok);color:#c9edc6;}
+  .feedback-box.bad{background:rgba(196,69,58,0.25);border:2px solid var(--red-bad);color:#ffd3ce;}
+
+  .win-panel{
+    text-align:center;background:var(--wood);border:3px solid var(--gold);
+    border-radius:20px;padding:32px;max-width:600px;width:100%;
+  }
+  .win-panel h2{color:var(--gold-light);font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:10px;}
+  .win-panel p{margin-bottom:18px;font-size:1.05rem;}
+  .stars{font-size:2.5rem;margin-bottom:10px;}
+
+  .nav-row{display:flex;gap:14px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+
+  .badge-final{
+    font-family:'Passion One',sans-serif;
+    font-size:clamp(1.6rem,4vw,2.4rem);
+    color:var(--gold-light);
+    margin:14px 0;
+  }
+  .final-score-num{
+    font-family:'Passion One',sans-serif;
+    font-size:clamp(3rem,8vw,5rem);
+    color:var(--gold);
+    text-shadow:3px 3px 0 var(--black);
+  }
+
+  @media (max-width:600px){
+    .bins{flex-direction:column;}
+    .match-cols{flex-direction:column;align-items:center;}
+  }
+</style>
+</head>
+<body>
+
+<div id="score-bar" style="display:none;">
+  <span>PETUALANGAN KRIYA DAYAK</span>
+  <span>Skor: <span class="pts" id="score-display">0</span></span>
+</div>
+
+<!-- SCREEN: INTRO -->
+<div class="screen active" id="screen-intro">
+  <div class="zigzag" style="margin-bottom:30px;"></div>
+  <h1 class="title-main">PETUALANGAN<br>KRIYA DAYAK</h1>
+  <p class="subtitle">Jelajahi 6 misi seru untuk menjadi ahli perancangan dan produksi kerajinan berinspirasi budaya lokal!</p>
+  <div style="margin-top:40px;">
+    <button class="btn gold btn-big" onclick="startGame()">MULAI PETUALANGAN</button>
+  </div>
+  <div class="zigzag" style="margin-top:30px;"></div>
+</div>
+
+<!-- SCREEN: MAP -->
+<div class="screen" id="screen-map">
+  <div class="map-wrap">
+    <h2 style="color:var(--gold-light);text-align:center;font-size:clamp(1.5rem,4vw,2.2rem);">Peta Misi</h2>
+    <p style="text-align:center;opacity:0.85;">Selesaikan misi secara berurutan untuk membuka misi berikutnya.</p>
+    <div class="map-nodes" id="map-nodes"></div>
+  </div>
+</div>
+
+<!-- SCREEN: MISI 1 -->
+<div class="screen" id="screen-m1">
+  <div class="mission-header">
+    <h2>Misi 1: Detektif Dimensi Budaya</h2>
+    <p>Pilih sebuah kartu, lalu tap kotak "2 Dimensi" atau "3 Dimensi" yang sesuai.</p>
+  </div>
+  <div class="progress-line"><div class="progress-fill" id="m1-progress"></div></div>
+  <div class="card-panel">
+    <div class="pool" id="m1-pool"></div>
+    <div class="bins">
+      <div class="bin" data-cat="2d">
+        <h3>2 Dimensi</h3>
+        <div class="placed-items" id="bin-2d"></div>
+      </div>
+      <div class="bin" data-cat="3d">
+        <h3>3 Dimensi</h3>
+        <div class="placed-items" id="bin-3d"></div>
+      </div>
+    </div>
+  </div>
+  <div class="feedback-box" id="m1-feedback"></div>
+</div>
+
+<!-- SCREEN: MISI 2 -->
+<div class="screen" id="screen-m2">
+  <div class="mission-header">
+    <h2>Misi 2: Rancang atau Produksi?</h2>
+    <p>Benar atau Salah? Jawab pernyataan berikut ini.</p>
+  </div>
+  <div class="progress-line"><div class="progress-fill" id="m2-progress"></div></div>
+  <div class="card-panel">
+    <div class="statement-box" id="m2-statement"></div>
+    <div style="display:flex;justify-content:center;">
+      <div class="tf-buttons">
+        <button class="btn green" onclick="m2Answer(true)">BENAR</button>
+        <button class="btn" style="background:var(--red-bad);box-shadow:0 6px 0 #7a2b23;" onclick="m2Answer(false)">SALAH</button>
+      </div>
+    </div>
+  </div>
+  <div class="feedback-box" id="m2-feedback"></div>
+</div>
+
+<!-- SCREEN: MISI 3 -->
+<div class="screen" id="screen-m3">
+  <div class="mission-header">
+    <h2>Misi 3: Jodohkan Inspirasi</h2>
+    <p>Tap satu budaya lokal, lalu tap ide produk yang paling cocok dikembangkan darinya.</p>
+  </div>
+  <div class="progress-line"><div class="progress-fill" id="m3-progress"></div></div>
+  <div class="card-panel">
+    <div class="match-cols">
+      <div class="match-col" id="m3-left"></div>
+      <div class="match-col" id="m3-right"></div>
+    </div>
+  </div>
+  <div class="feedback-box" id="m3-feedback"></div>
+</div>
+
+<!-- SCREEN: MISI 4 -->
+<div class="screen" id="screen-m4">
+  <div class="mission-header">
+    <h2>Misi 4: Susun Alur Kerajinan</h2>
+    <p>Tap kartu tahapan sesuai urutan yang benar, dari awal sampai produk jadi.</p>
+  </div>
+  <div class="card-panel">
+    <div class="slots" id="m4-slots"></div>
+    <div class="chip-pool" id="m4-pool"></div>
+    <div style="display:flex;justify-content:center;gap:14px;">
+      <button class="btn" onclick="resetSequence('m4')">ULANGI</button>
+      <button class="btn gold" onclick="checkSequence('m4')">PERIKSA URUTAN</button>
+    </div>
+  </div>
+  <div class="feedback-box" id="m4-feedback"></div>
+</div>
+
+<!-- SCREEN: MISI 5 -->
+<div class="screen" id="screen-m5">
+  <div class="mission-header">
+    <h2>Misi 5: Jadi Pengusaha Muda</h2>
+    <p>Jawab secepat mungkin sebelum waktu habis!</p>
+  </div>
+  <div class="timer-bar-wrap"><div class="timer-bar" id="m5-timerbar"></div></div>
+  <div class="card-panel">
+    <div class="quiz-q" id="m5-question" style="margin-left:auto;margin-right:auto;"></div>
+    <div class="quiz-opts" id="m5-options" style="margin-left:auto;margin-right:auto;"></div>
+  </div>
+  <div class="feedback-box" id="m5-feedback"></div>
+</div>
+
+<!-- SCREEN: MISI 6 -->
+<div class="screen" id="screen-m6">
+  <div class="mission-header">
+    <h2>Misi Akhir: Perjalanan Gantungan Kunci Dayak</h2>
+    <p>Susun 10 langkah lengkap, dari sumber inspirasi sampai produk siap dijual!</p>
+  </div>
+  <div class="card-panel">
+    <div class="slots" id="m6-slots"></div>
+    <div class="chip-pool" id="m6-pool"></div>
+    <div style="display:flex;justify-content:center;gap:14px;">
+      <button class="btn" onclick="resetSequence('m6')">ULANGI</button>
+      <button class="btn gold" onclick="checkSequence('m6')">PERIKSA URUTAN</button>
+    </div>
+  </div>
+  <div class="feedback-box" id="m6-feedback"></div>
+</div>
+
+<!-- SCREEN: MISSION WIN -->
+<div class="screen" id="screen-win">
+  <div class="win-panel">
+    <div class="stars">&#11088;&#11088;&#11088;</div>
+    <h2 id="win-title">Misi Selesai!</h2>
+    <p id="win-desc"></p>
+    <button class="btn gold btn-big" onclick="goToMap()">LANJUT KE PETA MISI</button>
+  </div>
+</div>
+
+<!-- SCREEN: FINAL -->
+<div class="screen" id="screen-final">
+  <div class="zigzag" style="margin-bottom:24px;"></div>
+  <h1 class="title-main">SELAMAT!</h1>
+  <p class="subtitle">Kamu telah menyelesaikan seluruh Petualangan Kriya Dayak.</p>
+  <div class="final-score-num" id="final-score">0</div>
+  <div class="badge-final" id="final-badge"></div>
+  <button class="btn gold btn-big" onclick="restartAll()">MAIN LAGI DARI AWAL</button>
+  <div class="zigzag" style="margin-top:24px;"></div>
+</div>
+
+<script>
+let totalScore = 0;
+let unlockedMission = 1;
+let missionDone = {1:false,2:false,3:false,4:false,5:false,6:false};
+
+const missionMeta = [
+  {id:1, name:"Detektif Dimensi Budaya", desc:"Klasifikasi 2D vs 3D"},
+  {id:2, name:"Rancang atau Produksi?", desc:"Benar atau Salah"},
+  {id:3, name:"Jodohkan Inspirasi", desc:"Mencocokkan pasangan"},
+  {id:4, name:"Susun Alur Kerajinan", desc:"Mengurutkan tahapan"},
+  {id:5, name:"Jadi Pengusaha Muda", desc:"Tantangan cepat"},
+  {id:6, name:"Misi Akhir: Gantungan Kunci Dayak", desc:"Mengurutkan 10 langkah"}
+];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function updateScore(add){
+  totalScore += add;
+  document.getElementById('score-display').textContent = totalScore;
+}
+function startGame(){
+  document.getElementById('score-bar').style.display='flex';
+  renderMap();
+  showScreen('screen-map');
+}
+function renderMap(){
+  const wrap = document.getElementById('map-nodes');
+  wrap.innerHTML = '';
+  missionMeta.forEach(m=>{
+    const locked = m.id > unlockedMission;
+    const done = missionDone[m.id];
+    const div = document.createElement('div');
+    div.className = 'node ' + (locked ? 'locked' : (done ? 'done unlocked' : 'unlocked'));
+    div.innerHTML = `
+      <div class="badge-num">${done ? '&#10003;' : m.id}</div>
+      <div class="node-name">${m.name}</div>
+      <div class="node-desc">${m.desc}</div>
+      <div class="node-status">${locked ? '&#128274; Terkunci' : (done ? 'Selesai!' : 'Siap dimainkan')}</div>
+    `;
+    if(!locked){
+      div.onclick = () => openMission(m.id);
+    }
+    wrap.appendChild(div);
+  });
+}
+function goToMap(){
+  renderMap();
+  showScreen('screen-map');
+}
+function openMission(id){
+  if(id===1) initM1();
+  if(id===2) initM2();
+  if(id===3) initM3();
+  if(id===4) initM4();
+  if(id===5) initM5();
+  if(id===6) initM6();
+  showScreen('screen-m'+id);
+}
+function missionWin(id, title, desc, bonus){
+  missionDone[id] = true;
+  updateScore(bonus);
+  if(unlockedMission === id) unlockedMission = id+1;
+  document.getElementById('win-title').textContent = title;
+  document.getElementById('win-desc').textContent = desc;
+  showScreen('screen-win');
+  if(id===6){
+    setTimeout(()=>{ showFinal(); }, 50);
+  }
+}
+function showFinal(){
+  document.getElementById('final-score').textContent = totalScore;
+  let badge = 'Pengrajin Pemula';
+  if(totalScore >= 260) badge = 'Master Kriya Budaya!';
+  else if(totalScore >= 200) badge = 'Perancang Kreatif';
+  else if(totalScore >= 140) badge = 'Pengrajin Terampil';
+  document.getElementById('final-badge').textContent = 'Gelar kamu: ' + badge;
+  showScreen('screen-final');
+}
+function restartAll(){
+  totalScore = 0;
+  unlockedMission = 1;
+  missionDone = {1:false,2:false,3:false,4:false,5:false,6:false};
+  updateScore(0);
+  showScreen('screen-intro');
+  document.getElementById('score-bar').style.display='none';
+}
+
+/* ================= MISI 1: KLASIFIKASI 2D/3D ================= */
+const m1Items = [
+  {id:1, text:"Motif Dayak pada kain", cat:"2d"},
+  {id:2, text:"Gambar motif ukiran", cat:"2d"},
+  {id:3, text:"Relief pada dinding", cat:"2d"},
+  {id:4, text:"Motif ukiran Dayak", cat:"2d"},
+  {id:5, text:"Rumah Betang (rumah adat)", cat:"3d"},
+  {id:6, text:"Mandau (senjata tradisional)", cat:"3d"},
+  {id:7, text:"Alat musik tradisional", cat:"3d"},
+  {id:8, text:"Perhiasan tradisional", cat:"3d"}
+];
+let m1Selected = null;
+let m1PlacedCount = 0;
+
+function initM1(){
+  m1PlacedCount = 0;
+  m1Selected = null;
+  document.getElementById('bin-2d').innerHTML='';
+  document.getElementById('bin-3d').innerHTML='';
+  document.getElementById('m1-feedback').className='feedback-box';
+  document.getElementById('m1-progress').style.width='0%';
+  const pool = document.getElementById('m1-pool');
+  pool.innerHTML='';
+  m1Items.forEach(item=>{
+    const el = document.createElement('div');
+    el.className='item-card';
+    el.id='m1-item-'+item.id;
+    el.textContent=item.text;
+    el.onclick=()=>selectM1Item(item.id, el);
+    pool.appendChild(el);
+  });
+}
+function selectM1Item(id, el){
+  document.querySelectorAll('#m1-pool .item-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  m1Selected = id;
+}
+function placeM1(cat){
+  if(m1Selected===null) return;
+  const item = m1Items.find(i=>i.id===m1Selected);
+  const el = document.getElementById('m1-item-'+item.id);
+  const fb = document.getElementById('m1-feedback');
+  if(item.cat === cat){
+    el.classList.add('placed');
+    const binId = cat==='2d' ? 'bin-2d' : 'bin-3d';
+    const div = document.createElement('div');
+    div.className='placed-item';
+    div.textContent=item.text;
+    document.getElementById(binId).appendChild(div);
+    m1PlacedCount++;
+    updateScore(10);
+    fb.textContent = cat==='2d'
+      ? 'Benar! Objek 2 dimensi hanya punya panjang dan lebar, seperti motif atau gambar.'
+      : 'Benar! Objek 3 dimensi punya panjang, lebar, dan tinggi.';
+    fb.className='feedback-box show ok';
+    document.getElementById('m1-progress').style.width = Math.round(m1PlacedCount/8*100)+'%';
+    if(m1PlacedCount===8){
+      setTimeout(()=>{ missionWin(1, 'Misi 1 Selesai!', 'Kamu berhasil membedakan semua objek budaya 2 dimensi dan 3 dimensi.', 20); }, 900);
+    }
+  } else {
+    fb.textContent = 'Belum tepat. Coba pikirkan lagi: apakah benda ini punya panjang, lebar, dan TINGGI, atau hanya panjang dan lebar saja?';
+    fb.className='feedback-box show bad';
+    el.classList.remove('selected');
+  }
+  m1Selected = null;
+}
+document.addEventListener('click', function(e){
+  const bin = e.target.closest('.bin');
+  if(bin && document.getElementById('screen-m1').classList.contains('active')){
+    placeM1(bin.getAttribute('data-cat'));
+  }
+});
+
+/* ================= MISI 2: BENAR/SALAH ================= */
+const m2Statements = [
+  {text:"Perancangan adalah kegiatan memikirkan dan menentukan bentuk produk sebelum produk itu dibuat.", ans:true, reason:"Betul, itulah pengertian perancangan."},
+  {text:"Memotong bahan, merakit, mengecat, dan memasang motif termasuk kegiatan produksi.", ans:true, reason:"Betul, itu adalah kegiatan mewujudkan rancangan menjadi produk nyata."},
+  {text:"Menentukan bahan dan ukuran produk sebelum dibuat termasuk kegiatan produksi.", ans:false, reason:"Salah, itu termasuk kegiatan perancangan, bukan produksi."},
+  {text:"Urutan yang benar adalah: Ide - Rancangan - Model - Produksi - Produk Jadi.", ans:true, reason:"Betul, itulah urutan dari ide sampai produk jadi."},
+  {text:"Produksi dilakukan sebelum perancangan.", ans:false, reason:"Salah, perancangan harus dilakukan lebih dahulu sebelum produksi."},
+  {text:"Produksi adalah kegiatan membuat rancangan menjadi produk yang nyata.", ans:true, reason:"Betul, itulah pengertian produksi."}
+];
+let m2Index=0, m2Correct=0;
+function initM2(){
+  m2Index=0; m2Correct=0;
+  document.getElementById('m2-progress').style.width='0%';
+  document.getElementById('m2-feedback').className='feedback-box';
+  showM2Question();
+}
+function showM2Question(){
+  document.getElementById('m2-statement').textContent = m2Statements[m2Index].text;
+  document.getElementById('m2-feedback').className='feedback-box';
+}
+function m2Answer(val){
+  const q = m2Statements[m2Index];
+  const fb = document.getElementById('m2-feedback');
+  const correct = (val === q.ans);
+  if(correct){
+    m2Correct++;
+    updateScore(10);
+    fb.textContent = 'Benar! ' + q.reason;
+    fb.className='feedback-box show ok';
+  } else {
+    fb.textContent = 'Kurang tepat. ' + q.reason;
+    fb.className='feedback-box show bad';
+  }
+  m2Index++;
+  document.getElementById('m2-progress').style.width = Math.round(m2Index/m2Statements.length*100)+'%';
+  setTimeout(()=>{
+    if(m2Index < m2Statements.length){
+      showM2Question();
+    } else {
+      if(m2Correct >= 4){
+        missionWin(2, 'Misi 2 Selesai!', 'Kamu menjawab benar '+m2Correct+' dari 6 pernyataan tentang perancangan dan produksi.', 20);
+      } else {
+        document.getElementById('m2-statement').textContent = 'Skor kamu masih '+m2Correct+'/6. Ayo coba lagi supaya lebih paham!';
+        setTimeout(initM2, 1800);
+      }
+    }
+  }, 1400);
+}
+
+/* ================= MISI 3: MATCHING ================= */
+const m3Pairs = [
+  {left:"Motif Dayak", right:"Tas"},
+  {left:"Rumah Betang", right:"Miniatur / hiasan meja"},
+  {left:"Mandau", right:"Gantungan kunci"},
+  {left:"Burung Enggang", right:"Hiasan dinding"},
+  {left:"Alat musik tradisional", right:"Miniatur"},
+  {left:"Perhiasan tradisional", right:"Aksesori modern"}
+];
+let m3SelectedLeft=null, m3MatchedCount=0;
+function shuffleArr(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function initM3(){
+  m3SelectedLeft=null; m3MatchedCount=0;
+  document.getElementById('m3-feedback').className='feedback-box';
+  document.getElementById('m3-progress').style.width='0%';
+  const leftCol = document.getElementById('m3-left');
+  const rightCol = document.getElementById('m3-right');
+  leftCol.innerHTML=''; rightCol.innerHTML='';
+  const leftShuffled = shuffleArr(m3Pairs.map(p=>p.left));
+  const rightShuffled = shuffleArr(m3Pairs.map(p=>p.right));
+  leftShuffled.forEach(text=>{
+    const el = document.createElement('div');
+    el.className='match-item';
+    el.textContent=text;
+    el.dataset.value=text;
+    el.onclick=()=>selectM3Left(el);
+    leftCol.appendChild(el);
+  });
+  rightShuffled.forEach(text=>{
+    const el = document.createElement('div');
+    el.className='match-item';
+    el.textContent=text;
+    el.dataset.value=text;
+    el.onclick=()=>selectM3Right(el);
+    rightCol.appendChild(el);
+  });
+}
+function selectM3Left(el){
+  if(el.classList.contains('matched')) return;
+  document.querySelectorAll('#m3-left .match-item').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  m3SelectedLeft = el;
+}
+function selectM3Right(el){
+  if(el.classList.contains('matched') || !m3SelectedLeft) return;
+  const fb = document.getElementById('m3-feedback');
+  const pair = m3Pairs.find(p=>p.left===m3SelectedLeft.dataset.value);
+  if(pair && pair.right === el.dataset.value){
+    m3SelectedLeft.classList.remove('selected');
+    m3SelectedLeft.classList.add('matched');
+    el.classList.add('matched');
+    m3MatchedCount++;
+    updateScore(10);
+    fb.textContent = 'Cocok! "'+pair.left+'" bisa dikembangkan menjadi "'+pair.right+'".';
+    fb.className='feedback-box show ok';
+    document.getElementById('m3-progress').style.width = Math.round(m3MatchedCount/6*100)+'%';
+    m3SelectedLeft = null;
+    if(m3MatchedCount===6){
+      setTimeout(()=>{ missionWin(3, 'Misi 3 Selesai!', 'Kamu berhasil menjodohkan semua budaya lokal dengan ide produknya.', 20); }, 900);
+    }
+  } else {
+    fb.textContent = 'Belum cocok. Coba pikirkan lagi produk apa yang paling sesuai dengan inspirasi budaya tersebut.';
+    fb.className='feedback-box show bad';
+    m3SelectedLeft.classList.remove('selected');
+    m3SelectedLeft = null;
+  }
+}
+
+/* ================= MISI 4: SUSUN ALUR (7 langkah) ================= */
+const m4Steps = ["Budaya","Ide","Sketsa","Pilih","Prototipe","Produksi","Produk"];
+
+/* ================= MISI 6: SUSUN ALUR LENGKAP (10 langkah) ================= */
+const m6Steps = [
+  "Sumber inspirasi: Motif Dayak",
+  "Ide: gantungan kunci bentuk & motif Dayak",
+  "Menentukan pengguna: pelajar, wisatawan, masyarakat",
+  "Menentukan bahan: kayu tipis / limbah kayu",
+  "Membuat beberapa sketsa bentuk",
+  "Memilih ide terbaik: bentuk perisai motif Dayak",
+  "Membuat prototipe",
+  "Mengevaluasi (ternyata terlalu besar, diperkecil)",
+  "Produksi: membuat beberapa buah",
+  "Produk siap digunakan / dijual"
+];
+
+let seqState = {};
+function initSequenceMission(key, steps){
+  const order = steps.map((t,i)=>i);
+  const shuffled = shuffleArr(order);
+  seqState[key] = {
+    steps: steps,
+    slots: new Array(steps.length).fill(null),
+    usedChips: new Array(steps.length).fill(false),
+    shuffledOrder: shuffled
+  };
+  renderSequence(key);
+}
+function renderSequence(key){
+  const st = seqState[key];
+  const slotsWrap = document.getElementById(key+'-slots');
+  const poolWrap = document.getElementById(key+'-pool');
+  slotsWrap.innerHTML='';
+  st.slots.forEach((val,idx)=>{
+    const div = document.createElement('div');
+    div.className = 'slot' + (val!==null ? ' filled':'');
+    div.textContent = val!==null ? st.steps[val] : (idx+1);
+    div.onclick = ()=>unfillSlot(key, idx);
+    slotsWrap.appendChild(div);
+  });
+  poolWrap.innerHTML='';
+  st.shuffledOrder.forEach(origIdx=>{
+    const chip = document.createElement('div');
+    chip.className='chip' + (st.usedChips[origIdx] ? ' used':'');
+    chip.textContent = st.steps[origIdx];
+    chip.onclick = ()=>fillSlot(key, origIdx);
+    poolWrap.appendChild(chip);
+  });
+  document.getElementById(key+'-feedback').className='feedback-box';
+}
+function fillSlot(key, origIdx){
+  const st = seqState[key];
+  if(st.usedChips[origIdx]) return;
+  const emptyIndex = st.slots.findIndex(s=>s===null);
+  if(emptyIndex===-1) return;
+  st.slots[emptyIndex] = origIdx;
+  st.usedChips[origIdx] = true;
+  renderSequence(key);
+}
+function unfillSlot(key, slotIdx){
+  const st = seqState[key];
+  const val = st.slots[slotIdx];
+  if(val===null) return;
+  st.usedChips[val] = false;
+  st.slots[slotIdx] = null;
+  renderSequence(key);
+}
+function resetSequence(key){
+  if(key==='m4') initSequenceMission('m4', m4Steps);
+  if(key==='m6') initSequenceMission('m6', m6Steps);
+}
+function checkSequence(key){
+  const st = seqState[key];
+  const fb = document.getElementById(key+'-feedback');
+  if(st.slots.includes(null)){
+    fb.textContent = 'Isi dulu semua kotak sebelum diperiksa ya.';
+    fb.className='feedback-box show bad';
+    return;
+  }
+  const slotsWrap = document.getElementById(key+'-slots');
+  let allCorrect = true;
+  st.slots.forEach((val,idx)=>{
+    const slotEl = slotsWrap.children[idx];
+    if(val === idx){
+      slotEl.classList.add('correct');
+      slotEl.classList.remove('wrong');
+    } else {
+      slotEl.classList.add('wrong');
+      slotEl.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  if(allCorrect){
+    const bonus = key==='m4' ? 30 : 50;
+    updateScore(bonus);
+    fb.textContent = 'Sempurna! Urutan alur sudah tepat.';
+    fb.className='feedback-box show ok';
+    setTimeout(()=>{
+      if(key==='m4'){
+        missionWin(4, 'Misi 4 Selesai!', 'Kamu berhasil menyusun alur kerajinan dari budaya sampai produk jadi.', 0);
+      } else {
+        missionWin(6, 'Misi Akhir Selesai!', 'Kamu berhasil menyusun seluruh perjalanan gantungan kunci motif Dayak, dari ide sampai produk jadi!', 0);
+      }
+    }, 1000);
+  } else {
+    fb.textContent = 'Ada urutan yang masih keliru (ditandai warna merah). Tap kotak yang salah untuk mengeluarkannya, lalu susun ulang.';
+    fb.className='feedback-box show bad';
+  }
+}
+function initM4(){ initSequenceMission('m4', m4Steps); }
+function initM6(){ initSequenceMission('m6', m6Steps); }
+
+/* ================= MISI 5: TANTANGAN CEPAT ================= */
+const m5Questions = [
+  {
+    q:"Bahan dan waktu terbatas. Ide A: miniatur Rumah Betang dari kayu (rumit). Ide B: gantungan kunci Rumah Betang dari limbah kayu (sederhana). Mana ide terbaik untuk situasi ini?",
+    opts:["Ide A: miniatur Rumah Betang dari kayu","Ide B: gantungan kunci dari limbah kayu"],
+    correct:1,
+    reason:"Ide B lebih mudah dibuat, bahan lebih sedikit, dan lebih mudah dijual sesuai kondisi bahan dan waktu yang terbatas."
+  },
+  {
+    q:"Manakah yang termasuk pertanyaan untuk memilih ide terbaik?",
+    opts:["Apakah mudah dibuat?","Berapa lama waktu pengiriman ke luar negeri?"],
+    correct:0,
+    reason:"\"Apakah mudah dibuat?\" adalah salah satu dari 7 pertanyaan untuk memilih ide terbaik."
+  },
+  {
+    q:"Benar atau salah: Ide terbaik selalu ide yang paling rumit.",
+    opts:["Benar","Salah"],
+    correct:1,
+    reason:"Salah. Ide terbaik bukan selalu ide yang paling rumit, melainkan yang menarik, bermanfaat, dapat dibuat, dan sesuai sumber daya yang ada."
+  },
+  {
+    q:"Manakah yang termasuk kriteria memilih ide terbaik?",
+    opts:["Apakah biayanya terjangkau?","Apa warna kesukaan guru?"],
+    correct:0,
+    reason:"\"Apakah biayanya terjangkau?\" adalah salah satu dari 7 pertanyaan untuk memilih ide terbaik."
+  },
+  {
+    q:"Benar atau salah: Ide terbaik adalah ide yang menarik, bermanfaat, dapat dibuat, dan sesuai kemampuan serta sumber daya yang tersedia.",
+    opts:["Benar","Salah"],
+    correct:0,
+    reason:"Benar, itulah ciri ide terbaik dalam memilih produk kerajinan."
+  }
+];
+let m5Index=0, m5Correct=0, m5Timer=null, m5TimeLeft=15;
+function initM5(){
+  m5Index=0; m5Correct=0;
+  document.getElementById('m5-feedback').className='feedback-box';
+  showM5Question();
+}
+function showM5Question(){
+  const q = m5Questions[m5Index];
+  document.getElementById('m5-question').textContent = q.q;
+  const optsWrap = document.getElementById('m5-options');
+  optsWrap.innerHTML='';
+  q.opts.forEach((opt,idx)=>{
+    const btn = document.createElement('button');
+    btn.className='btn';
+    btn.textContent=opt;
+    btn.onclick=()=>m5Answer(idx);
+    optsWrap.appendChild(btn);
+  });
+  document.getElementById('m5-feedback').className='feedback-box';
+  m5TimeLeft = 15;
+  document.getElementById('m5-timerbar').style.width='100%';
+  document.getElementById('m5-timerbar').style.background='var(--red)';
+  clearInterval(m5Timer);
+  m5Timer = setInterval(()=>{
+    m5TimeLeft -= 0.1;
+    const pct = Math.max(0, (m5TimeLeft/15)*100);
+    document.getElementById('m5-timerbar').style.width = pct+'%';
+    if(m5TimeLeft<=0){
+      clearInterval(m5Timer);
+      m5Answer(-1);
+    }
+  }, 100);
+}
+function m5Answer(idx){
+  clearInterval(m5Timer);
+  const q = m5Questions[m5Index];
+  const fb = document.getElementById('m5-feedback');
+  const optsWrap = document.getElementById('m5-options');
+  Array.from(optsWrap.children).forEach(b=>b.disabled=true);
+  if(idx === q.correct){
+    m5Correct++;
+    updateScore(15);
+    fb.textContent = 'Benar! ' + q.reason;
+    fb.className='feedback-box show ok';
+  } else {
+    fb.textContent = (idx===-1 ? 'Waktu habis! ' : 'Kurang tepat. ') + q.reason;
+    fb.className='feedback-box show bad';
+  }
+  m5Index++;
+  setTimeout(()=>{
+    if(m5Index < m5Questions.length){
+      showM5Question();
+    } else {
+      if(m5Correct >= 3){
+        missionWin(5, 'Misi 5 Selesai!', 'Kamu menjawab benar '+m5Correct+' dari 5 tantangan cepat memilih ide terbaik.', 20);
+      } else {
+        document.getElementById('m5-question').textContent = 'Skor kamu '+m5Correct+'/5. Ayo coba lagi supaya lebih cepat dan tepat!';
+        document.getElementById('m5-options').innerHTML='';
+        setTimeout(initM5, 1800);
+      }
+    }
+  }, 1600);
+}
+</script>
+</body>
+</html>
